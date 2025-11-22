@@ -1,5 +1,16 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
+// Determine server URL based on environment
+const getServerUrl = () => {
+  // Check if we're in production
+  if (process.env.NODE_ENV === 'production') {
+    // Use environment variable if set, otherwise construct from request
+    return process.env.API_BASE_URL || process.env.SERVER_URL || 'https://your-api-domain.com';
+  }
+  // Development - use localhost
+  return 'http://localhost:5000';
+};
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -16,14 +27,24 @@ const options = {
       },
     },
     servers: [
-      {
-        url: 'http://localhost:5000',
-        description: 'Development server',
-      },
-      {
-        url: 'https://api.theben.com',
-        description: 'Production server',
-      },
+      ...(process.env.NODE_ENV === 'production' 
+        ? [
+            {
+              url: process.env.API_BASE_URL || process.env.SERVER_URL || 'https://your-api-domain.com',
+              description: 'Production server',
+            }
+          ]
+        : [
+            {
+              url: 'http://localhost:5000',
+              description: 'Development server',
+            },
+            {
+              url: process.env.API_BASE_URL || process.env.SERVER_URL || '',
+              description: 'Production server (if configured)',
+            }
+          ]
+      ),
     ],
     tags: [
       {
@@ -269,33 +290,7 @@ const options = {
           }
         }
       }
-    },
-    tags: [
-      {
-        name: 'Music',
-        description: 'Music albums management endpoints'
-      },
-      {
-        name: 'Videos',
-        description: 'Video content management endpoints'
-      },
-      {
-        name: 'Tours',
-        description: 'Tour dates and events management endpoints'
-      },
-      {
-        name: 'Hero',
-        description: 'Hero video configuration endpoints'
-      },
-      {
-        name: 'Settings',
-        description: 'Website settings management endpoints'
-      },
-      {
-        name: 'Health',
-        description: 'Health check endpoints'
-      }
-    ]
+    }
   },
   apis: ['./server.js', './routes/*.js'], // Path to the API files
 };

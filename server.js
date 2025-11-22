@@ -26,10 +26,64 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy - needed for correct URL detection in production
+app.set('trust proxy', true);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger API Documentation - Must be before other routes
+// Serve Swagger UI files
+app.use('/api-docs', swaggerUi.serve);
+
+// Dynamically update server URL based on request
+app.use('/api-docs', (req, res, next) => {
+  // Get the base URL from request or environment
+  let baseUrl;
+  
+  if (process.env.NODE_ENV === 'production') {
+    // In production, use environment variable first, then detect from request
+    if (process.env.API_BASE_URL || process.env.SERVER_URL) {
+      baseUrl = process.env.API_BASE_URL || process.env.SERVER_URL;
+    } else {
+      // Auto-detect from request (works behind reverse proxy)
+      const protocol = req.protocol || (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+      const host = req.headers.host || req.headers['x-forwarded-host'];
+      baseUrl = `${protocol}://${host}`;
+    }
+  } else {
+    // In development, use localhost
+    baseUrl = 'http://localhost:5000';
+  }
+  
+  // Create a copy of the swagger spec with updated server URL
+  const updatedSpec = JSON.parse(JSON.stringify(swaggerSpec));
+  updatedSpec.servers = [
+    {
+      url: baseUrl,
+      description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
+    }
+  ];
+  
+  // Setup Swagger UI with updated spec
+  return swaggerUi.setup(updatedSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'The Ben API Documentation',
+    explorer: true,
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      tryItOutEnabled: true,
+    }
+  })(req, res, next);
+});
+
+console.log('Swagger UI configured at /api-docs');
+if (process.env.NODE_ENV === 'production') {
+  console.log('Swagger will dynamically use the deployment URL from requests');
+}
 
 // Configure Cloudinary
 cloudinary.config({
