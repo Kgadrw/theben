@@ -1,15 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
-// Determine server URL based on environment
-const getServerUrl = () => {
-  // Check if we're in production
-  if (process.env.NODE_ENV === 'production') {
-    // Use environment variable if set, otherwise construct from request
-    return process.env.API_BASE_URL || process.env.SERVER_URL || 'https://your-api-domain.com';
-  }
-  // Development - use localhost
-  return 'http://localhost:5000';
-};
+// API Base URL - Use deployment URL
+const API_BASE_URL = process.env.API_BASE_URL || process.env.SERVER_URL || 'https://theben.onrender.com';
 
 const options = {
   definition: {
@@ -17,7 +9,7 @@ const options = {
     info: {
       title: 'The Ben API',
       version: '1.0.0',
-      description: 'Backend API documentation for The Ben website. This API provides endpoints for managing music albums, videos, tours, hero video, and website settings.',
+      description: 'Backend API documentation for The Ben website. This API provides endpoints for managing music albums, videos, tours, hero video, biography/about, and website settings.',
       contact: {
         name: 'API Support',
         email: 'contact@theben.com'
@@ -30,7 +22,7 @@ const options = {
       ...(process.env.NODE_ENV === 'production' 
         ? [
             {
-              url: process.env.API_BASE_URL || process.env.SERVER_URL || 'https://your-api-domain.com',
+              url: process.env.API_BASE_URL || process.env.SERVER_URL || 'https://theben.onrender.com',
               description: 'Production server',
             }
           ]
@@ -40,8 +32,8 @@ const options = {
               description: 'Development server',
             },
             {
-              url: process.env.API_BASE_URL || process.env.SERVER_URL || '',
-              description: 'Production server (if configured)',
+              url: process.env.API_BASE_URL || process.env.SERVER_URL || 'https://theben.onrender.com',
+              description: 'Production server',
             }
           ]
       ),
@@ -66,6 +58,10 @@ const options = {
       {
         name: 'Settings',
         description: 'Website settings management endpoints'
+      },
+      {
+        name: 'About',
+        description: 'Biography and about section management endpoints'
       },
       {
         name: 'Health',
@@ -256,6 +252,38 @@ const options = {
             updatedAt: {
               type: 'string',
               format: 'date-time'
+            }
+          }
+        },
+        About: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'About unique identifier'
+            },
+            biography: {
+              type: 'string',
+              description: 'Biography text'
+            },
+            image: {
+              type: 'string',
+              description: 'Biography image URL'
+            },
+            title: {
+              type: 'string',
+              description: 'Biography title',
+              default: 'Biography'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
             }
           }
         },

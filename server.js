@@ -16,6 +16,7 @@ const Video = require('./models/Video');
 const Tour = require('./models/Tour');
 const Hero = require('./models/Hero');
 const Settings = require('./models/Settings');
+const About = require('./models/About');
 
 // Import database connection
 const connectDB = require('./config/database');
@@ -54,8 +55,12 @@ app.use('/api-docs', (req, res, next) => {
       baseUrl = `${protocol}://${host}`;
     }
   } else {
-    // In development, use localhost
-    baseUrl = 'http://localhost:5000';
+    // In development, check for env var first, otherwise use deployment URL
+    baseUrl = process.env.API_BASE_URL || process.env.SERVER_URL || 'https://theben.onrender.com';
+    // Allow localhost override for local development
+    if (process.env.USE_LOCALHOST === 'true') {
+      baseUrl = 'http://localhost:5000';
+    }
   }
   
   // Create a copy of the swagger spec with updated server URL
@@ -1215,6 +1220,130 @@ app.put('/api/hero', async (req, res) => {
     res.json(hero);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update hero video' });
+  }
+});
+
+// ==================== ABOUT/BIOGRAPHY ENDPOINTS ====================
+
+/**
+ * @swagger
+ * /api/about:
+ *   get:
+ *     summary: Get biography/about information
+ *     tags: [About]
+ *     responses:
+ *       200:
+ *         description: About information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/About'
+ *       500:
+ *         description: Server error
+ */
+app.get('/api/about', async (req, res) => {
+  try {
+    const about = await About.getAbout();
+    res.json(about);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch about information' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/about:
+ *   put:
+ *     summary: Update biography/about information
+ *     tags: [About]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               biography:
+ *                 type: string
+ *                 example: "Born Benjamin Mugisha on January 9, 1987..."
+ *               image:
+ *                 type: string
+ *                 example: "/theben.jfif"
+ *               title:
+ *                 type: string
+ *                 example: "Biography"
+ *     responses:
+ *       200:
+ *         description: About information updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/About'
+ *       500:
+ *         description: Failed to update about information
+ */
+app.put('/api/about', async (req, res) => {
+  try {
+    const { biography, image, title } = req.body;
+    const about = await About.updateAbout({
+      biography,
+      image,
+      title
+    });
+    res.json(about);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update about information' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/about/upload:
+ *   post:
+ *     summary: Upload biography image
+ *     tags: [About]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: image
+ *         type: file
+ *         required: true
+ *         description: Image file to upload
+ *     responses:
+ *       200:
+ *         description: Image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UploadResponse'
+ *       400:
+ *         description: No file uploaded
+ *       500:
+ *         description: Upload failed
+ */
+app.post('/api/about/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const result = await uploadToCloudinary(req.file.buffer, {
+      resource_type: 'image',
+      folder: 'about',
+      transformation: [
+        { width: 1200, height: 1600, crop: 'limit' },
+        { quality: 'auto' }
+      ]
+    });
+    res.json({ 
+      url: result.secure_url, 
+      public_id: result.public_id,
+      width: result.width,
+      height: result.height
+    });
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image: ' + error.message });
   }
 });
 
