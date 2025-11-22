@@ -1,0 +1,304 @@
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'The Ben API',
+      version: '1.0.0',
+      description: 'Backend API documentation for The Ben website. This API provides endpoints for managing music albums, videos, tours, hero video, and website settings.',
+      contact: {
+        name: 'API Support',
+        email: 'contact@theben.com'
+      },
+      license: {
+        name: 'ISC',
+      },
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Development server',
+      },
+      {
+        url: 'https://api.theben.com',
+        description: 'Production server',
+      },
+    ],
+    tags: [
+      {
+        name: 'Music',
+        description: 'Music albums management endpoints'
+      },
+      {
+        name: 'Videos',
+        description: 'Video content management endpoints'
+      },
+      {
+        name: 'Tours',
+        description: 'Tour dates and events management endpoints'
+      },
+      {
+        name: 'Hero',
+        description: 'Hero video configuration endpoints'
+      },
+      {
+        name: 'Settings',
+        description: 'Website settings management endpoints'
+      },
+      {
+        name: 'Health',
+        description: 'Health check endpoints'
+      }
+    ],
+    components: {
+      schemas: {
+        Album: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Album unique identifier'
+            },
+            title: {
+              type: 'string',
+              description: 'Album title'
+            },
+            description: {
+              type: 'string',
+              description: 'Album description or release date'
+            },
+            image: {
+              type: 'string',
+              description: 'Album cover image URL'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          }
+        },
+        Video: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Video unique identifier'
+            },
+            title: {
+              type: 'string',
+              description: 'Video title'
+            },
+            videoId: {
+              type: 'string',
+              description: 'YouTube video ID',
+              nullable: true
+            },
+            youtubeUrl: {
+              type: 'string',
+              description: 'YouTube video URL',
+              nullable: true
+            },
+            videoUrl: {
+              type: 'string',
+              description: 'Cloudinary video URL',
+              nullable: true
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          }
+        },
+        Tour: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Tour unique identifier'
+            },
+            title: {
+              type: 'string',
+              description: 'Tour title'
+            },
+            location: {
+              type: 'string',
+              description: 'Tour location'
+            },
+            date: {
+              type: 'string',
+              format: 'date',
+              description: 'Tour date'
+            },
+            description: {
+              type: 'string',
+              description: 'Tour description'
+            },
+            ticketUrl: {
+              type: 'string',
+              description: 'Ticket purchase URL'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          }
+        },
+        Hero: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Hero unique identifier'
+            },
+            videoId: {
+              type: 'string',
+              description: 'YouTube video ID',
+              nullable: true
+            },
+            youtubeUrl: {
+              type: 'string',
+              description: 'YouTube video URL',
+              nullable: true
+            },
+            videoUrl: {
+              type: 'string',
+              description: 'Cloudinary video URL',
+              nullable: true
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          }
+        },
+        Settings: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Settings unique identifier'
+            },
+            siteTitle: {
+              type: 'string',
+              description: 'Site title'
+            },
+            siteDescription: {
+              type: 'string',
+              description: 'Site description'
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'Contact email'
+            },
+            socialMedia: {
+              type: 'object',
+              properties: {
+                facebook: { type: 'string' },
+                twitter: { type: 'string' },
+                instagram: { type: 'string' },
+                youtube: { type: 'string' },
+                spotify: { type: 'string' },
+                appleMusic: { type: 'string' },
+                soundcloud: { type: 'string' }
+              }
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
+        },
+        Error: {
+          type: 'object',
+          properties: {
+            error: {
+              type: 'string',
+              description: 'Error message'
+            }
+          }
+        },
+        UploadResponse: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'Uploaded file URL'
+            },
+            public_id: {
+              type: 'string',
+              description: 'Cloudinary public ID'
+            },
+            width: {
+              type: 'integer',
+              description: 'Image/Video width'
+            },
+            height: {
+              type: 'integer',
+              description: 'Image/Video height'
+            }
+          }
+        }
+      }
+    },
+    tags: [
+      {
+        name: 'Music',
+        description: 'Music albums management endpoints'
+      },
+      {
+        name: 'Videos',
+        description: 'Video content management endpoints'
+      },
+      {
+        name: 'Tours',
+        description: 'Tour dates and events management endpoints'
+      },
+      {
+        name: 'Hero',
+        description: 'Hero video configuration endpoints'
+      },
+      {
+        name: 'Settings',
+        description: 'Website settings management endpoints'
+      },
+      {
+        name: 'Health',
+        description: 'Health check endpoints'
+      }
+    ]
+  },
+  apis: ['./server.js', './routes/*.js'], // Path to the API files
+};
+
+module.exports = swaggerJsdoc(options);
+

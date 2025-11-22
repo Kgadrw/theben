@@ -6,6 +6,8 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 require('dotenv').config();
 
 // Import models
@@ -87,7 +89,28 @@ const upload = multer({
 
 // ==================== MUSIC ENDPOINTS ====================
 
-// Get all albums
+/**
+ * @swagger
+ * /api/music:
+ *   get:
+ *     summary: Get all albums
+ *     tags: [Music]
+ *     responses:
+ *       200:
+ *         description: List of all albums
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Album'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 app.get('/api/music', async (req, res) => {
   try {
     const albums = await Album.find().sort({ createdAt: -1 });
@@ -97,7 +120,33 @@ app.get('/api/music', async (req, res) => {
   }
 });
 
-// Get single album
+/**
+ * @swagger
+ * /api/music/{id}:
+ *   get:
+ *     summary: Get a single album by ID
+ *     tags: [Music]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Album ID
+ *     responses:
+ *       200:
+ *         description: Album details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Album'
+ *       400:
+ *         description: Invalid album ID
+ *       404:
+ *         description: Album not found
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/music/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -113,7 +162,32 @@ app.get('/api/music/:id', async (req, res) => {
   }
 });
 
-// Upload album image
+/**
+ * @swagger
+ * /api/music/upload:
+ *   post:
+ *     summary: Upload album cover image
+ *     tags: [Music]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: image
+ *         type: file
+ *         required: true
+ *         description: Album cover image file (JPG, PNG, GIF, WebP)
+ *     responses:
+ *       200:
+ *         description: Image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UploadResponse'
+ *       400:
+ *         description: No file uploaded
+ *       500:
+ *         description: Upload failed
+ */
 app.post('/api/music/upload', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -136,7 +210,40 @@ app.post('/api/music/upload', upload.single('image'), async (req, res) => {
   }
 });
 
-// Create new album
+/**
+ * @swagger
+ * /api/music:
+ *   post:
+ *     summary: Create a new album
+ *     tags: [Music]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "New Album"
+ *               description:
+ *                 type: string
+ *                 example: "Album description or release date"
+ *               image:
+ *                 type: string
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
+ *     responses:
+ *       201:
+ *         description: Album created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Album'
+ *       500:
+ *         description: Failed to create album
+ */
 app.post('/api/music', async (req, res) => {
   try {
     const { title, description, image } = req.body;
@@ -151,7 +258,46 @@ app.post('/api/music', async (req, res) => {
   }
 });
 
-// Update album
+/**
+ * @swagger
+ * /api/music/{id}:
+ *   put:
+ *     summary: Update an album
+ *     tags: [Music]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Album ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Album updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Album'
+ *       400:
+ *         description: Invalid album ID
+ *       404:
+ *         description: Album not found
+ *       500:
+ *         description: Failed to update album
+ */
 app.put('/api/music/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -171,7 +317,37 @@ app.put('/api/music/:id', async (req, res) => {
   }
 });
 
-// Delete album
+/**
+ * @swagger
+ * /api/music/{id}:
+ *   delete:
+ *     summary: Delete an album
+ *     tags: [Music]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Album ID
+ *     responses:
+ *       200:
+ *         description: Album deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Album deleted successfully"
+ *       400:
+ *         description: Invalid album ID
+ *       404:
+ *         description: Album not found
+ *       500:
+ *         description: Failed to delete album
+ */
 app.delete('/api/music/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -189,7 +365,24 @@ app.delete('/api/music/:id', async (req, res) => {
 
 // ==================== VIDEO ENDPOINTS ====================
 
-// Get all videos
+/**
+ * @swagger
+ * /api/videos:
+ *   get:
+ *     summary: Get all videos
+ *     tags: [Videos]
+ *     responses:
+ *       200:
+ *         description: List of all videos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Video'
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/videos', async (req, res) => {
   try {
     const videos = await Video.find().sort({ createdAt: -1 });
@@ -199,7 +392,33 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
-// Get single video
+/**
+ * @swagger
+ * /api/videos/{id}:
+ *   get:
+ *     summary: Get a single video by ID
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Video ID
+ *     responses:
+ *       200:
+ *         description: Video details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Invalid video ID
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/videos/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -215,7 +434,32 @@ app.get('/api/videos/:id', async (req, res) => {
   }
 });
 
-// Upload video file
+/**
+ * @swagger
+ * /api/videos/upload:
+ *   post:
+ *     summary: Upload video file
+ *     tags: [Videos]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: video
+ *         type: file
+ *         required: true
+ *         description: Video file (MP4, MOV, AVI, WebM, max 200MB)
+ *     responses:
+ *       200:
+ *         description: Video uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UploadResponse'
+ *       400:
+ *         description: No file uploaded
+ *       500:
+ *         description: Upload failed
+ */
 app.post('/api/videos/upload', upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
@@ -240,7 +484,48 @@ app.post('/api/videos/upload', upload.single('video'), async (req, res) => {
   }
 });
 
-// Create new video
+/**
+ * @swagger
+ * /api/videos:
+ *   post:
+ *     summary: Create a new video
+ *     tags: [Videos]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "New Video"
+ *               videoId:
+ *                 type: string
+ *                 example: "8ufRrmc6Bj4"
+ *                 description: YouTube video ID (required if videoUrl not provided)
+ *               youtubeUrl:
+ *                 type: string
+ *                 example: "https://www.youtube.com/watch?v=8ufRrmc6Bj4"
+ *                 description: YouTube video URL (required if videoUrl not provided)
+ *               videoUrl:
+ *                 type: string
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/video/upload/v1/videos/video-123"
+ *                 description: Cloudinary video URL (required if videoId not provided)
+ *     responses:
+ *       201:
+ *         description: Video created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Video ID or video file is required
+ *       500:
+ *         description: Failed to create video
+ */
 app.post('/api/videos', async (req, res) => {
   try {
     const { title, videoId, youtubeUrl, videoUrl } = req.body;
@@ -278,7 +563,48 @@ app.post('/api/videos', async (req, res) => {
   }
 });
 
-// Update video
+/**
+ * @swagger
+ * /api/videos/{id}:
+ *   put:
+ *     summary: Update a video
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Video ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               videoId:
+ *                 type: string
+ *               youtubeUrl:
+ *                 type: string
+ *               videoUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Video updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Invalid video ID
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Failed to update video
+ */
 app.put('/api/videos/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -307,7 +633,37 @@ app.put('/api/videos/:id', async (req, res) => {
   }
 });
 
-// Delete video
+/**
+ * @swagger
+ * /api/videos/{id}:
+ *   delete:
+ *     summary: Delete a video
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Video ID
+ *     responses:
+ *       200:
+ *         description: Video deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video deleted successfully"
+ *       400:
+ *         description: Invalid video ID
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Failed to delete video
+ */
 app.delete('/api/videos/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -325,7 +681,24 @@ app.delete('/api/videos/:id', async (req, res) => {
 
 // ==================== TOUR ENDPOINTS ====================
 
-// Get all tours
+/**
+ * @swagger
+ * /api/tours:
+ *   get:
+ *     summary: Get all tours
+ *     tags: [Tours]
+ *     responses:
+ *       200:
+ *         description: List of all tours
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Tour'
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/tours', async (req, res) => {
   try {
     const tours = await Tour.find().sort({ date: 1 });
@@ -335,7 +708,33 @@ app.get('/api/tours', async (req, res) => {
   }
 });
 
-// Get single tour
+/**
+ * @swagger
+ * /api/tours/{id}:
+ *   get:
+ *     summary: Get a single tour by ID
+ *     tags: [Tours]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tour ID
+ *     responses:
+ *       200:
+ *         description: Tour details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tour'
+ *       400:
+ *         description: Invalid tour ID
+ *       404:
+ *         description: Tour not found
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/tours/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -351,7 +750,50 @@ app.get('/api/tours/:id', async (req, res) => {
   }
 });
 
-// Create new tour
+/**
+ * @swagger
+ * /api/tours:
+ *   post:
+ *     summary: Create a new tour
+ *     tags: [Tours]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - location
+ *               - date
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Concert with Bruce Melodie"
+ *               location:
+ *                 type: string
+ *                 example: "Rwanda"
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2026-01-26"
+ *               description:
+ *                 type: string
+ *                 example: "Highly anticipated concert"
+ *               ticketUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: "https://tickets.example.com"
+ *     responses:
+ *       201:
+ *         description: Tour created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tour'
+ *       500:
+ *         description: Failed to create tour
+ */
 app.post('/api/tours', async (req, res) => {
   try {
     const { title, location, date, description, ticketUrl } = req.body;
@@ -368,7 +810,52 @@ app.post('/api/tours', async (req, res) => {
   }
 });
 
-// Update tour
+/**
+ * @swagger
+ * /api/tours/{id}:
+ *   put:
+ *     summary: Update a tour
+ *     tags: [Tours]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tour ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               description:
+ *                 type: string
+ *               ticketUrl:
+ *                 type: string
+ *                 format: uri
+ *     responses:
+ *       200:
+ *         description: Tour updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tour'
+ *       400:
+ *         description: Invalid tour ID
+ *       404:
+ *         description: Tour not found
+ *       500:
+ *         description: Failed to update tour
+ */
 app.put('/api/tours/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -388,7 +875,37 @@ app.put('/api/tours/:id', async (req, res) => {
   }
 });
 
-// Delete tour
+/**
+ * @swagger
+ * /api/tours/{id}:
+ *   delete:
+ *     summary: Delete a tour
+ *     tags: [Tours]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tour ID
+ *     responses:
+ *       200:
+ *         description: Tour deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Tour deleted successfully"
+ *       400:
+ *         description: Invalid tour ID
+ *       404:
+ *         description: Tour not found
+ *       500:
+ *         description: Failed to delete tour
+ */
 app.delete('/api/tours/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -406,7 +923,22 @@ app.delete('/api/tours/:id', async (req, res) => {
 
 // ==================== SETTINGS ENDPOINTS ====================
 
-// Get settings
+/**
+ * @swagger
+ * /api/settings:
+ *   get:
+ *     summary: Get website settings
+ *     tags: [Settings]
+ *     responses:
+ *       200:
+ *         description: Settings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Settings'
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/settings', async (req, res) => {
   try {
     const settings = await Settings.getSettings();
@@ -416,7 +948,56 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-// Update settings
+/**
+ * @swagger
+ * /api/settings:
+ *   put:
+ *     summary: Update website settings
+ *     tags: [Settings]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               siteTitle:
+ *                 type: string
+ *                 example: "Theben | Official Website"
+ *               siteDescription:
+ *                 type: string
+ *                 example: "Official website for theben"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "contact@theben.com"
+ *               socialMedia:
+ *                 type: object
+ *                 properties:
+ *                   facebook:
+ *                     type: string
+ *                   twitter:
+ *                     type: string
+ *                   instagram:
+ *                     type: string
+ *                   youtube:
+ *                     type: string
+ *                   spotify:
+ *                     type: string
+ *                   appleMusic:
+ *                     type: string
+ *                   soundcloud:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Settings updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Settings'
+ *       500:
+ *         description: Failed to update settings
+ */
 app.put('/api/settings', async (req, res) => {
   try {
     const settings = await Settings.getSettings();
@@ -430,9 +1011,22 @@ app.put('/api/settings', async (req, res) => {
 
 // ==================== HERO VIDEO ENDPOINTS ====================
 
-// ==================== HERO VIDEO ENDPOINTS ====================
-
-// Get hero video
+/**
+ * @swagger
+ * /api/hero:
+ *   get:
+ *     summary: Get hero video configuration
+ *     tags: [Hero]
+ *     responses:
+ *       200:
+ *         description: Hero video configuration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hero'
+ *       500:
+ *         description: Server error
+ */
 app.get('/api/hero', async (req, res) => {
   try {
     const hero = await Hero.getHero();
@@ -442,7 +1036,32 @@ app.get('/api/hero', async (req, res) => {
   }
 });
 
-// Upload hero video file
+/**
+ * @swagger
+ * /api/hero/upload:
+ *   post:
+ *     summary: Upload hero video file
+ *     tags: [Hero]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: video
+ *         type: file
+ *         required: true
+ *         description: Hero video file (MP4, MOV, AVI, WebM, max 200MB)
+ *     responses:
+ *       200:
+ *         description: Video uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UploadResponse'
+ *       400:
+ *         description: No file uploaded
+ *       500:
+ *         description: Upload failed
+ */
 app.post('/api/hero/upload', upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
@@ -467,7 +1086,43 @@ app.post('/api/hero/upload', upload.single('video'), async (req, res) => {
   }
 });
 
-// Update hero video
+/**
+ * @swagger
+ * /api/hero:
+ *   put:
+ *     summary: Update hero video configuration
+ *     tags: [Hero]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 example: "8ufRrmc6Bj4"
+ *                 description: YouTube video ID (required if videoUrl not provided)
+ *               youtubeUrl:
+ *                 type: string
+ *                 example: "https://www.youtube.com/watch?v=8ufRrmc6Bj4"
+ *                 description: YouTube video URL (required if videoUrl not provided)
+ *               videoUrl:
+ *                 type: string
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/video/upload/v1/videos/hero/video-123"
+ *                 description: Cloudinary video URL (required if videoId not provided)
+ *     responses:
+ *       200:
+ *         description: Hero video updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hero'
+ *       400:
+ *         description: Video ID or video file is required
+ *       500:
+ *         description: Failed to update hero video
+ */
 app.put('/api/hero', async (req, res) => {
   try {
     const { videoId, youtubeUrl, videoUrl } = req.body;
@@ -511,6 +1166,27 @@ app.put('/api/hero', async (req, res) => {
 
 // ==================== HEALTH CHECK ====================
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "OK"
+ *                 message:
+ *                   type: string
+ *                   example: "API is running"
+ */
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API is running' });
 });
@@ -525,5 +1201,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`Swagger API documentation available at http://localhost:${PORT}/api-docs`);
 });
 
