@@ -335,15 +335,26 @@ app.post('/api/music/upload', upload.single('image'), async (req, res) => {
 app.post('/api/music', async (req, res) => {
   try {
     const { title, description, image, hoverImage, link } = req.body;
-    const newAlbum = await Album.create({
+    
+    const albumData = {
       title: title || 'Album Title',
       description: description || 'Album description or release date',
-      image: image || '/album 1.jpg',
-      hoverImage: hoverImage || null,
-      link: link || ''
-    });
+      image: image || '/album 1.jpg'
+    };
+    
+    // Add optional fields if provided
+    if (hoverImage) {
+      albumData.hoverImage = hoverImage;
+    }
+    
+    if (link) {
+      albumData.link = link;
+    }
+    
+    const newAlbum = await Album.create(albumData);
     res.status(201).json(newAlbum);
   } catch (error) {
+    console.error('Error creating album:', error);
     res.status(500).json({ error: 'Failed to create album' });
   }
 });
