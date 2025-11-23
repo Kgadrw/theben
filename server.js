@@ -283,16 +283,30 @@ app.post('/api/music/upload', upload.single('image'), async (req, res) => {
  *             type: object
  *             required:
  *               - title
+ *               - image
  *             properties:
  *               title:
  *                 type: string
+ *                 description: Album title
  *                 example: "New Album"
  *               description:
  *                 type: string
+ *                 description: Album description or release date
  *                 example: "Album description or release date"
  *               image:
  *                 type: string
+ *                 description: Album cover image URL
  *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
+ *               hoverImage:
+ *                 type: string
+ *                 description: Album hover image URL (displayed on hover when user hovers over the album)
+ *                 nullable: true
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/hover-image-123"
+ *               link:
+ *                 type: string
+ *                 description: Listening link URL where users can listen to the music (Spotify, YouTube, Apple Music, etc.)
+ *                 nullable: true
+ *                 example: "https://open.spotify.com/album/..."
  *     responses:
  *       201:
  *         description: Album created successfully
@@ -305,11 +319,13 @@ app.post('/api/music/upload', upload.single('image'), async (req, res) => {
  */
 app.post('/api/music', async (req, res) => {
   try {
-    const { title, description, image } = req.body;
+    const { title, description, image, hoverImage, link } = req.body;
     const newAlbum = await Album.create({
       title: title || 'Album Title',
       description: description || 'Album description or release date',
-      image: image || '/album 1.jpg'
+      image: image || '/album 1.jpg',
+      hoverImage: hoverImage || null,
+      link: link || ''
     });
     res.status(201).json(newAlbum);
   } catch (error) {
@@ -339,10 +355,26 @@ app.post('/api/music', async (req, res) => {
  *             properties:
  *               title:
  *                 type: string
+ *                 description: Album title
+ *                 example: "Updated Album"
  *               description:
  *                 type: string
+ *                 description: Album description or release date
+ *                 example: "Updated album description"
  *               image:
  *                 type: string
+ *                 description: Album cover image URL
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
+ *               hoverImage:
+ *                 type: string
+ *                 description: Album hover image URL (displayed on hover when user hovers over the album)
+ *                 nullable: true
+ *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/hover-image-123"
+ *               link:
+ *                 type: string
+ *                 description: Listening link URL where users can listen to the music (Spotify, YouTube, Apple Music, etc.)
+ *                 nullable: true
+ *                 example: "https://open.spotify.com/album/..."
  *     responses:
  *       200:
  *         description: Album updated successfully

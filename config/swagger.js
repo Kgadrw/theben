@@ -79,15 +79,30 @@ const options = {
             },
             title: {
               type: 'string',
-              description: 'Album title'
+              description: 'Album title',
+              example: 'New Album'
             },
             description: {
               type: 'string',
-              description: 'Album description or release date'
+              description: 'Album description or release date',
+              example: 'Album description or release date'
             },
             image: {
               type: 'string',
-              description: 'Album cover image URL'
+              description: 'Album cover image URL',
+              example: 'https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123'
+            },
+            hoverImage: {
+              type: 'string',
+              description: 'Album hover image URL (displayed on hover when user hovers over the album)',
+              nullable: true,
+              example: 'https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/hover-image-123'
+            },
+            link: {
+              type: 'string',
+              description: 'Listening link URL where users can listen to the music (Spotify, YouTube, Apple Music, etc.)',
+              nullable: true,
+              example: 'https://open.spotify.com/album/...'
             },
             createdAt: {
               type: 'string',
@@ -99,7 +114,8 @@ const options = {
               format: 'date-time',
               description: 'Last update timestamp'
             }
-          }
+          },
+          required: ['title', 'image']
         },
         Video: {
           type: 'object',
