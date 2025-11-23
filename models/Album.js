@@ -14,6 +14,14 @@ const albumSchema = new mongoose.Schema({
     type: String,
     required: true,
     default: '/album 1.jpg'
+  },
+  hoverImage: {
+    type: String,
+    default: null
+  },
+  link: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

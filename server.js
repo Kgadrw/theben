@@ -299,14 +299,29 @@ app.post('/api/music/upload', upload.single('image'), async (req, res) => {
  *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
  *               hoverImage:
  *                 type: string
- *                 description: Album hover image URL (displayed on hover when user hovers over the album)
+ *                 description: Album hover image URL (displayed on hover when user hovers over the album). This is optional.
  *                 nullable: true
  *                 example: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/hover-image-123"
  *               link:
  *                 type: string
- *                 description: Listening link URL where users can listen to the music (Spotify, YouTube, Apple Music, etc.)
+ *                 description: Listening link URL where users can listen to the music (Spotify, YouTube, Apple Music, etc.). This is optional.
  *                 nullable: true
  *                 example: "https://open.spotify.com/album/..."
+ *           examples:
+ *             basic:
+ *               summary: Basic album (required fields only)
+ *               value:
+ *                 title: "New Album"
+ *                 description: "Album description or release date"
+ *                 image: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
+ *             complete:
+ *               summary: Complete album (all fields)
+ *               value:
+ *                 title: "New Album"
+ *                 description: "Album description or release date"
+ *                 image: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/image-123"
+ *                 hoverImage: "https://res.cloudinary.com/dgmexpa8v/image/upload/v1/images/albums/hover-image-123"
+ *                 link: "https://open.spotify.com/album/..."
  *     responses:
  *       201:
  *         description: Album created successfully
