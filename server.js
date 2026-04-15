@@ -17,6 +17,7 @@ const Tour = require('./models/Tour');
 const Hero = require('./models/Hero');
 const Settings = require('./models/Settings');
 const About = require('./models/About');
+const News = require('./models/News');
 
 // Import database connection
 const connectDB = require('./config/database');
@@ -1351,6 +1352,155 @@ app.put('/api/about', async (req, res) => {
     res.json(about);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update about information' });
+  }
+});
+
+// ==================== NEWS ENDPOINTS ====================
+
+const slugify = (value = '') =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+app.get('/api/news', async (req, res) => {
+  try {
+    const { published, q, limit } = req.query;
+
+    const filter = {};
+    if (published === 'true') filter.published = true;
+    if (published === 'false') filter.published = false;
+
+    if (q) {
+      filter.$text = { $search: String(q) };
+    }
+
+    const take = Math.min(Math.max(parseInt(String(limit || '50'), 10) || 50, 1), 200);
+
+    const cursor = News.find(filter)
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(take);
+
+    if (q) cursor.select({ score: { $meta: 'textScore' } }).sort({ score: { $meta: 'textScore' } });
+
+    const items = await cursor;
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch news' });
+  }
+});
+
+app.get('/api/news/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Allow fetching by slug as well as ObjectId
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
+    const item = isObjectId ? await News.findById(id) : await News.findOne({ slug: id });
+
+    if (!item) return res.status(404).json({ error: 'News article not found' });
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch news article' });
+  }
+});
+
+app.post('/api/news', async (req, res) => {
+  try {
+    const {
+      title,
+      slug,
+      excerpt,
+      content,
+      coverImage,
+      category,
+      tags,
+      published,
+      publishedAt,
+    } = req.body || {};
+
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const finalSlug = slugify(slug || title);
+
+    // Ensure slug uniqueness if provided/generated
+    let uniqueSlug = finalSlug || undefined;
+    if (uniqueSlug) {
+      const exists = await News.findOne({ slug: uniqueSlug });
+      if (exists) uniqueSlug = `${uniqueSlug}-${Date.now()}`;
+    }
+
+    const doc = await News.create({
+      title: String(title).trim(),
+      slug: uniqueSlug,
+      excerpt: excerpt ? String(excerpt).trim() : '',
+      content: String(content),
+      coverImage: coverImage ? String(coverImage).trim() : '',
+      category: category ? String(category).trim() : 'News',
+      tags: Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [],
+      published: typeof published === 'boolean' ? published : true,
+      publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+    });
+
+    res.status(201).json(doc);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create news article' });
+  }
+});
+
+app.put('/api/news/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid news article ID' });
+    }
+
+    const update = { ...(req.body || {}) };
+
+    if (typeof update.title === 'string' && !update.slug) {
+      update.slug = slugify(update.title);
+    }
+    if (typeof update.slug === 'string') {
+      update.slug = slugify(update.slug);
+    }
+    if (update.publishedAt) {
+      update.publishedAt = new Date(update.publishedAt);
+    }
+    if (Array.isArray(update.tags)) {
+      update.tags = update.tags.map((t) => String(t).trim()).filter(Boolean);
+    }
+
+    const item = await News.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!item) return res.status(404).json({ error: 'News article not found' });
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update news article' });
+  }
+});
+
+app.delete('/api/news/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid news article ID' });
+    }
+
+    const item = await News.findByIdAndDelete(id);
+    if (!item) return res.status(404).json({ error: 'News article not found' });
+    res.json({ message: 'News article deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete news article' });
   }
 });
 
